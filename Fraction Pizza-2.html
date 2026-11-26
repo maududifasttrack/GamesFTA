@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fraction Pizza</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#2f6b3a;--card:#fffdf8;--ink:#2b1d14;--muted:#6b5a4d;--tomato:#c8372d;
+  --ok:#2f6b3a;--bad:#b3261e;--line:#e6d8c3;--field:#fff;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17301c;--card:#2a2119;--ink:#f6ecdc;--muted:#c4b39f;--line:#4a3b2d;--field:#1f1812;--ok:#7fd18c;--bad:#ff8a80;
+}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;font-family:"Fredoka",system-ui,sans-serif;color:var(--ink);background:var(--bg);
+  background-image:linear-gradient(90deg,rgba(255,255,255,.07) 50%,transparent 50%),linear-gradient(rgba(255,255,255,.07) 50%,transparent 50%);
+  background-size:48px 48px;display:flex;justify-content:center;padding:20px 14px}
+main{width:100%;max-width:880px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#fff;margin-bottom:14px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(1.7rem,5vw,2.4rem);font-weight:700}
+.stats{display:flex;gap:8px}
+.chip{background:rgba(0,0,0,.28);border-radius:999px;padding:6px 14px;font-weight:500}
+.chip b{font-weight:700}
+.card{background:var(--card);border-radius:22px;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;box-shadow:0 8px 0 rgba(0,0,0,.22)}
+@media(max-width:700px){.card{grid-template-columns:1fr}}
+.plate{display:flex;align-items:center;justify-content:center}
+svg{width:100%;max-width:340px;height:auto}
+.panel{display:flex;flex-direction:column;gap:14px;justify-content:center}
+.q{font-size:1.3rem;font-weight:600;margin:0}
+.hint-text{color:var(--muted);margin:0;min-height:1.4em}
+.frac{display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.frac hr{width:100%;border:0;border-top:4px solid var(--ink);margin:0}
+input{font:inherit;font-weight:600;font-size:1.8rem;text-align:center;width:5.2rem;padding:6px;border-radius:12px;border:3px solid var(--line);background:var(--field);color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--tomato);outline-offset:2px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pct input{width:7rem}
+.pct span{font-size:1.8rem;font-weight:600}
+button{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 20px;cursor:pointer}
+.go{background:var(--tomato);color:#fff;box-shadow:0 4px 0 #8f2119}
+.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8f2119}
+.alt{background:transparent;color:var(--muted);border:2px solid var(--line)}
+.fb{min-height:3.2em;margin:0;font-weight:500}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+.done{grid-column:1/-1;text-align:center;padding:12px 0}
+.done h2{font-size:2rem;margin:0 0 6px}
+.done p{font-size:1.2rem;margin:6px 0 16px}
+.slice{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+@media(prefers-reduced-motion:reduce){.slice{transition:none}}
+.en{display:block;font-weight:400;font-size:.82em;color:var(--muted);line-height:1.3}
+.fb .en{color:inherit;opacity:.85}
+button .en{color:inherit;opacity:.85;font-size:.7em}
+.stepbox{display:flex;flex-direction:column;gap:12px}
+.chip.btn{border:0;color:#fff;cursor:pointer;font:inherit;font-weight:500}
+#party{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+.pz{position:absolute;top:0;width:clamp(48px,10vw,84px);animation:fall 1.9s ease-in forwards}
+.pz svg,.pzc svg{width:100%;height:auto;display:block}
+.pzc{position:absolute;left:50%;top:38%;width:clamp(130px,30vw,210px);animation:cele 1.9s ease-out forwards}
+@keyframes fall{0%{transform:translateY(-20vh) rotate(0)}100%{transform:translateY(115vh) rotate(720deg)}}
+@keyframes cele{0%{transform:translate(-50%,-50%) scale(0) rotate(-30deg);opacity:1}
+ 20%{transform:translate(-50%,-50%) scale(1.2) rotate(12deg)}35%{transform:translate(-50%,-50%) scale(1) rotate(-10deg)}
+ 50%{transform:translate(-50%,-50%) rotate(10deg)}65%{transform:translate(-50%,-50%) rotate(0)}
+ 85%{opacity:1}100%{transform:translate(-50%,-50%) scale(1.1);opacity:0}}
+@keyframes fadeonly{0%{opacity:0}20%,80%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.pz{display:none}.pzc{animation:fadeonly 1.4s forwards;transform:translate(-50%,-50%)}}
+.ubox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;max-width:340px;aspect-ratio:1;background:var(--field);border:3px dashed var(--line);border-radius:20px;padding:14px}
+.uemoji{font-size:clamp(4rem,16vw,6rem);line-height:1}
+.ueq{font-size:clamp(1.5rem,5vw,2rem);font-weight:700;text-align:center}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🍕 Fraction Pizza</h1>
+    <div class="stats">
+      <div class="chip">Soalan / Question <b id="round">1</b>/12</div>
+      <div class="chip">Markah / Score <b id="score">0</b></div>
+      <button class="chip btn" id="music" aria-pressed="true">🎵 Muzik / Music: ON</button>
+    </div>
+  </header>
+  <section class="card" id="game">
+    <div class="plate">
+      <svg id="pizza" viewBox="-12 -12 224 224" role="img" aria-label="Pizza"></svg>
+      <div id="unitBox" class="ubox hidden"><div class="uemoji" id="uemoji" aria-hidden="true"></div><div class="ueq" id="ueq"></div></div>
+    </div>
+    <div class="panel">
+      <div id="step1" class="stepbox">
+        <p class="q">Langkah 1: Berapakah pecahan pizza yang tinggal?<span class="en">Step 1: What fraction of the pizza is left?</span></p>
+        <div class="row">
+          <div class="frac">
+            <input id="num" inputmode="numeric" aria-label="Pengangka / Numerator" autocomplete="off">
+            <hr>
+            <input id="den" inputmode="numeric" aria-label="Penyebut / Denominator" autocomplete="off">
+          </div>
+          <button class="go" id="check1">Semak / Check</button>
+        </div>
+      </div>
+      <div id="step2" class="stepbox hidden">
+        <p class="q">Langkah 2: Tukarkan <span class="fr"></span> kepada peratus.<span class="en">Step 2: Convert <span class="fr"></span> to a percentage.</span></p>
+        <div class="row pct">
+          <input id="pct" inputmode="decimal" aria-label="Peratus / Percentage" autocomplete="off"><span>%</span>
+          <button class="go" id="check2">Semak / Check</button>
+        </div>
+      </div>
+      <div id="step3" class="stepbox hidden">
+        <p class="q">Langkah 3: Tukarkan <span class="pc"></span> kepada perpuluhan.<span class="en">Step 3: Convert <span class="pc"></span> to a decimal.</span></p>
+        <div class="row pct">
+          <input id="dec" inputmode="decimal" aria-label="Perpuluhan / Decimal" autocomplete="off">
+          <button class="go" id="check3">Semak / Check</button>
+        </div>
+      </div>
+      <div id="stepU" class="stepbox hidden">
+        <p class="q" id="uq"></p>
+        <div class="row pct">
+          <input id="unitIn" inputmode="decimal" aria-label="Jawapan / Answer" autocomplete="off"><span id="uunit"></span>
+          <button class="go" id="checkU">Semak / Check</button>
+        </div>
+      </div>
+      <p class="fb" id="fb" aria-live="polite"></p>
+      <div class="row">
+        <button class="alt" id="hint">Petunjuk / Hint</button>
+        <button class="go hidden" id="next">Seterusnya / Next</button>
+      </div>
+      <p class="hint-text" id="hintText"></p>
+    </div>
+  </section>
+</main>
+<div id="party" aria-hidden="true"></div>
+<script>
+(function(){
+  var QS=[[1,2],[1,5],[2,5],[3,5],[4,5],[1,10],[3,10],[7,10],[9,10]], UNITS=[
+    {txt:"5.3 kg",to:"g",ans:5300,emoji:"⚖️",ms:"1 kg = 1000 g. Darabkan dengan 1000.",en:"1 kg = 1000 g. Multiply by 1000."},
+    {txt:"300 ml",to:"l",ans:0.3,emoji:"🥤",ms:"1 l = 1000 ml. Bahagikan dengan 1000.",en:"1 l = 1000 ml. Divide by 1000."},
+    {txt:"7000 mm",to:"m",ans:7,emoji:"📏",ms:"1 m = 1000 mm. Bahagikan dengan 1000.",en:"1 m = 1000 mm. Divide by 1000."}
+  ], TOTAL=QS.length+UNITS.length, st, q;
+  var $=function(id){return document.getElementById(id)};
+  function pick(a){return a[Math.floor(Math.random()*a.length)]}
+  function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+  function fmt(x){return (Math.round(x*100)/100).toString()}
+
+  function newQuestion(){
+    var r=st.round, f=st.deck[r-1], isU=!Array.isArray(f);
+    $("round").textContent=r;
+    ["num","den","dec","pct","unitIn"].forEach(function(id){$(id).value="";$(id).disabled=false});
+    ["check1","check2","check3","checkU"].forEach(function(id){$(id).disabled=false});
+    $("step2").classList.add("hidden");$("step3").classList.add("hidden");
+    $("next").classList.add("hidden");$("hint").classList.remove("hidden");
+    $("fb").innerHTML="";$("fb").className="fb";$("hintText").innerHTML="";
+    $("pizza").classList.toggle("hidden",isU);$("unitBox").classList.toggle("hidden",!isU);
+    $("step1").classList.toggle("hidden",isU);$("stepU").classList.toggle("hidden",!isU);
+    if(isU){
+      q={u:f,t:[0],h:[false],step:1};
+      $("uemoji").textContent=f.emoji;$("ueq").textContent=f.txt+" = ______ "+f.to;
+      $("uq").innerHTML=bi("Tukar unit: Tukarkan "+f.txt+" kepada "+f.to+".","Unit conversion: Convert "+f.txt+" to "+f.to+".");
+      $("uunit").textContent=f.to;
+      $("unitIn").focus({preventScroll:true});
+    }else{
+      var n=f[1],k=f[0];
+      var idx=shuffle(Array.from({length:n},function(_,i){return i})).slice(0,k);
+      q={n:n,k:k,taken:idx,t:[0,0,0],h:[false,false,false],step:1};
+      drawPizza();$("num").focus({preventScroll:true});
+    }
+  }
+
+  function drawPizza(){
+    var n=q.n, svg=$("pizza"), out="", R=96, c=100, step=360/n, gap=1.6;
+    out+='<circle cx="100" cy="100" r="104" fill="#d9cdb8" opacity=".55"/>';
+    for(var i=0;i<n;i++){
+      var a0=(-90+i*step+gap/2)*Math.PI/180, a1=(-90+(i+1)*step-gap/2)*Math.PI/180, am=(a0+a1)/2;
+      var taken=q.taken.indexOf(i)>=0, dx=0, dy=0;
+      var x0=c+R*Math.cos(a0),y0=c+R*Math.sin(a0),x1=c+R*Math.cos(a1),y1=c+R*Math.sin(a1);
+      var d="M100 100L"+x0.toFixed(2)+" "+y0.toFixed(2)+"A"+R+" "+R+" 0 "+(step>180?1:0)+" 1 "+x1.toFixed(2)+" "+y1.toFixed(2)+"Z";
+      var g='<g class="slice" style="transform:translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)">';
+      if(taken){
+        g+='<path d="'+d+'" fill="#f6cf5e" stroke="#e9b15b" stroke-width="7" stroke-linejoin="round"/>';
+        g+='<path d="'+d+'" fill="#f6cf5e"/>';
+        var px=c+R*.6*Math.cos(am),py=c+R*.6*Math.sin(am);
+        var s=Math.max(4,Math.min(9,R*.35*Math.sin(Math.min(step,170)*Math.PI/360)));
+        g+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+s.toFixed(1)+'" fill="#c8372d"/>';
+        if(n<=5){var px2=c+R*.3*Math.cos(am),py2=c+R*.3*Math.sin(am);g+='<circle cx="'+px2.toFixed(1)+'" cy="'+py2.toFixed(1)+'" r="'+(s*.7).toFixed(1)+'" fill="#c8372d"/>'}
+      }else{
+        g+='<path d="'+d+'" fill="#ece5d6" stroke="#cfc3ac" stroke-width="2" stroke-dasharray="5 4"/>';
+      }
+      out+=g+'</g>';
+    }
+    svg.innerHTML=out;
+  }
+
+  /* ---------- Muzik & animasi ---------- */
+  var AC=null, musicOn=true, started=false, nextT=0, stp=0, timer=null, EIGHTH=60/112/2;
+  var MEL=[76,79,76,72,74,76,74,0, 72,76,79,76,81,79,76,0, 77,81,77,74,76,79,76,0, 74,76,79,76,72,0,72,0];
+  var BASS={0:48,4:43,8:48,12:45,16:53,20:50,24:43,28:48};
+  function hz(m){return 440*Math.pow(2,(m-69)/12)}
+  function tone(m,t,dur,type,vol){
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type;o.frequency.value=hz(m);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+0.05);
+  }
+  function sched(){
+    while(nextT<AC.currentTime+0.35){
+      var m=MEL[stp%32];
+      if(m)tone(m,nextT,EIGHTH*1.7,"triangle",0.07);
+      var b=BASS[stp%32];
+      if(b)tone(b,nextT,EIGHTH*3.6,"sine",0.09);
+      nextT+=EIGHTH;stp++;
+    }
+  }
+  function startMusic(){
+    if(!musicOn)return;
+    try{
+      if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}
+      if(AC.state==="suspended")AC.resume();
+      if(!started){started=true;nextT=AC.currentTime+0.1;stp=0;timer=setInterval(sched,100)}
+    }catch(e){}
+  }
+  function chime(){
+    if(!musicOn||!AC)return;
+    var t=AC.currentTime+0.02;
+    [79,83,86,91].forEach(function(m,i){tone(m,t+i*0.09,0.35,"square",0.05)});
+  }
+  function setMusic(on){
+    musicOn=on;var b=$("music");
+    b.textContent=on?"🎵 Muzik / Music: ON":"🔇 Muzik / Music: OFF";b.setAttribute("aria-pressed",on);
+    if(on)startMusic();else if(AC&&AC.state==="running")AC.suspend();
+  }
+  document.addEventListener("visibilitychange",function(){
+    if(!AC||!started)return;
+    if(document.hidden)AC.suspend();else if(musicOn)AC.resume();
+  });
+  var PIZZA='<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d18a36"/><circle cx="50" cy="50" r="41" fill="#f6cf5e"/>'+
+    '<path d="M50 9V91M9 50H91M21 21L79 79M79 21L21 79" stroke="#e9b15b" stroke-width="2"/>'+
+    '<g fill="#c8372d"><circle cx="35" cy="32" r="7"/><circle cx="64" cy="34" r="7"/><circle cx="50" cy="52" r="7"/><circle cx="30" cy="62" r="6"/><circle cx="68" cy="64" r="7"/></g></svg>';
+  var partyTimer=null;
+  function celebrate(){
+    chime();
+    var p=$("party"),h='<div class="pzc">'+PIZZA+'</div>';
+    for(var i=0;i<8;i++)h+='<div class="pz" style="left:'+(4+i*12+Math.random()*6).toFixed(0)+'%;animation-delay:'+(Math.random()*0.5).toFixed(2)+'s;animation-duration:'+(1.5+Math.random()*0.7).toFixed(2)+'s">'+PIZZA+'</div>';
+    p.innerHTML=h;
+    clearTimeout(partyTimer);partyTimer=setTimeout(function(){p.innerHTML=""},2300);
+  }
+
+  function bi(ms,en){return ms+'<span class="en">'+en+'</span>'}
+  function addScore(p){st.score+=p;$("score").textContent=st.score}
+  function say(ms,en,cls){$("fb").innerHTML=bi(ms,en);$("fb").className="fb "+cls}
+  function num(id){return parseFloat($(id).value.replace(",","."))}
+  function setAll(cls,t){Array.prototype.forEach.call(document.querySelectorAll("."+cls),function(e){e.textContent=t})}
+  function pts(i){return q.t[i]===1&&!q.h[i]?10:5}
+
+  function check1(){
+    var a=parseInt($("num").value,10), b=parseInt($("den").value,10);
+    if(!a||!b){say("Isi pengangka dan penyebut dahulu.","Fill in the numerator and denominator first.","bad");return}
+    q.t[0]++;
+    if(a*q.n===q.k*b){
+      addScore(pts(0));
+      say("Betul! "+q.k+"/"+q.n+" pizza yang tinggal.","Correct! "+q.k+"/"+q.n+" of the pizza is left.","ok");celebrate();
+      goStep(2);
+    }else if(q.t[0]>=2){
+      say("Jawapan yang betul ialah "+q.k+"/"+q.n+".","The correct answer is "+q.k+"/"+q.n+".","bad");
+      goStep(2);
+    }else say("Belum tepat. Kira keping berwarna yang tinggal dan jumlah semua keping.","Not quite. Count the coloured slices that are left and all the slices.","bad");
+  }
+  function check2(){
+    var v=num("pct");
+    if(isNaN(v)){say("Taip nombor peratus dahulu.","Type a percentage first.","bad");return}
+    q.t[1]++;
+    var ans=q.k/q.n*100, line=q.k+"/"+q.n+" = "+fmt(ans)+"%";
+    if(Math.abs(v-ans)<0.01){addScore(pts(1));say("Betul! "+line,"Correct! "+line,"ok");celebrate();goStep(3)}
+    else if(q.t[1]>=2){say("Jawapan yang betul: "+line,"The correct answer: "+line,"bad");goStep(3)}
+    else if(v>100)say("Peratus penuh sebiji pizza ialah 100%. Cuba lagi.","A whole pizza is 100%. Try again.","bad");
+    else say("Belum tepat. Cuba lagi.","Not quite. Try again.","bad");
+  }
+  function check3(){
+    var v=num("dec");
+    if(isNaN(v)){say("Taip nombor perpuluhan dahulu.","Type a decimal number first.","bad");return}
+    q.t[2]++;
+    var ans=q.k/q.n, line=fmt(ans*100)+"% = "+fmt(ans);
+    if(Math.abs(v-ans)<1e-6){addScore(pts(2));say("Hebat! "+line,"Great job! "+line,"ok");celebrate();finish()}
+    else if(q.t[2]>=2){say("Jawapan yang betul: "+line,"The correct answer: "+line,"bad");finish()}
+    else say("Belum tepat. Cuba lagi.","Not quite. Try again.","bad");
+  }
+  function checkU(){
+    var v=num("unitIn"), u=q.u;
+    if(isNaN(v)){say("Taip jawapan dahulu.","Type your answer first.","bad");return}
+    q.t[0]++;
+    var line=u.txt+" = "+fmt(u.ans)+" "+u.to;
+    if(Math.abs(v-u.ans)<1e-6){addScore(pts(0));say("Hebat! "+line,"Great job! "+line,"ok");celebrate();finish()}
+    else if(q.t[0]>=2){say("Jawapan yang betul: "+line,"The correct answer: "+line,"bad");finish()}
+    else say("Belum tepat. Cuba lagi.","Not quite. Try again.","bad");
+  }
+  function dis(ids){ids.forEach(function(id){$(id).disabled=true})}
+  function goStep(n){
+    q.step=n;
+    if(n===2){dis(["num","den","check1"]);setAll("fr",q.k+"/"+q.n);$("step2").classList.remove("hidden");$("pct").focus({preventScroll:true})}
+    if(n===3){dis(["pct","check2"]);setAll("pc",fmt(q.k/q.n*100)+"%");$("step3").classList.remove("hidden");$("dec").focus({preventScroll:true})}
+    $("hintText").innerHTML="";
+  }
+  function finish(){
+    dis(["check1","check2","check3","checkU","num","den","dec","pct","unitIn"]);$("hint").classList.add("hidden");$("hintText").innerHTML="";
+    var nx=$("next");nx.innerHTML=st.round>=TOTAL?bi("Lihat markah","See score"):bi("Seterusnya","Next");nx.classList.remove("hidden");nx.focus({preventScroll:true});
+  }
+  function hint(){
+    q.h[q.step-1]=true;var h;
+    if(q.u)h=bi(q.u.ms,q.u.en);
+    else if(q.step===1)h=bi("Pecahan = keping yang tinggal ÷ jumlah semua keping. Keping berwarna kuning ialah keping yang tinggal.","Fraction = slices left ÷ total slices. The yellow slices are the ones left.");
+    else if(q.step===2)h=bi("Satu pizza = 100%. Satu keping = 100 ÷ "+q.n+" = "+fmt(100/q.n)+"%. Darabkan dengan "+q.k+".","One pizza = 100%. One slice = 100 ÷ "+q.n+" = "+fmt(100/q.n)+"%. Multiply by "+q.k+".");
+    else h=bi("Bahagikan peratus dengan 100: "+fmt(q.k/q.n*100)+" ÷ 100.","Divide the percentage by 100: "+fmt(q.k/q.n*100)+" ÷ 100.");
+    $("hintText").innerHTML=h;
+  }
+  function next(){
+    if(st.round>=TOTAL)return end();
+    st.round++;newQuestion();
+  }
+  function end(){
+    var s=st.score,m=s>=270?["Chef pizza terbaik! 🏆","Best pizza chef! 🏆"]:s>=180?["Bagus sekali! Teruskan berlatih.","Well done! Keep practising."]:["Jangan putus asa, cuba lagi untuk markah lebih tinggi.","Don't give up, try again for a higher score."];
+    $("game").innerHTML='<div class="done"><h2>Permainan tamat<span class="en">Game over</span></h2><p>Markah / Score: <b>'+s+'</b> / 300</p><p>'+bi(m[0],m[1])+'</p><button class="go" id="again">Main lagi / Play again</button></div>';
+    $("again").onclick=function(){location.reload()};$("again").focus();
+  }
+
+  st={round:1,score:0,deck:shuffle(QS.slice()).concat(UNITS)};
+  $("music").onclick=function(){setMusic(!musicOn)};
+  function firstGesture(){startMusic();document.removeEventListener("pointerdown",firstGesture);document.removeEventListener("keydown",firstGesture)}
+  document.addEventListener("pointerdown",firstGesture);document.addEventListener("keydown",firstGesture);
+  $("check1").onclick=check1;$("check2").onclick=check2;$("check3").onclick=check3;$("checkU").onclick=checkU;$("hint").onclick=hint;$("next").onclick=next;
+  ["num","den"].forEach(function(id){$(id).addEventListener("keydown",function(e){if(e.key==="Enter")check1()})});
+  $("dec").addEventListener("keydown",function(e){if(e.key==="Enter")check3()});
+  $("pct").addEventListener("keydown",function(e){if(e.key==="Enter")check2()});
+  $("unitIn").addEventListener("keydown",function(e){if(e.key==="Enter")checkU()});
+  newQuestion();
+})();
+</script>
+</body>
+</html>
