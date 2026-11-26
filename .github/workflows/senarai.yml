@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>🎮 Makmal Matematik</h1>
+<h1>-🎮 Makmal Matematik-</h1>
 <input id="cari" type="search" placeholder="Cari game...">
 <div id="tapis"></div>
 <div class="grid" id="grid"></div>
