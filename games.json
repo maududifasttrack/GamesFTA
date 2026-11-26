@@ -1,22 +1,32 @@
 [
   {
+    "title": "🏎️ Lumba Kelajuan",
+    "path": "lumba-kelajuan.html",
+    "tahun": "Tahun 6"
+  },
+  {
     "title": "Escape Room: Master Line & Angle",
-    "path": "Escape Room_ Master Line & Angle.html"
+    "path": "Escape Room_ Master Line & Angle.html",
+    "tahun": "Lain-lain"
   },
   {
     "title": "Fraction Pizza",
-    "path": "Fraction Pizza-2.html"
+    "path": "Fraction Pizza-2.html",
+    "tahun": "Lain-lain"
   },
   {
     "title": "Hebat Darab",
-    "path": "lumba-buah-darab.html"
+    "path": "lumba-buah-darab.html",
+    "tahun": "Lain-lain"
   },
   {
     "title": "Super Number Patterns",
-    "path": "super-number-patterns-camera-3.html"
+    "path": "super-number-patterns-camera-3.html",
+    "tahun": "Lain-lain"
   },
   {
     "title": "Travel Cashier 3D: Around the World!",
-    "path": "Travel Cashier 3D_ Around the World!.html"
+    "path": "Travel Cashier 3D_ Around the World!.html",
+    "tahun": "Lain-lain"
   }
 ]
