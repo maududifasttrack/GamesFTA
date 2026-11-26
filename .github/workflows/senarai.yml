@@ -1,46 +1,77 @@
-name: Jana senarai game
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Makmal Matematik</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,sans-serif;background:linear-gradient(135deg,#e0f2fe,#fef3c7);min-height:100vh;padding:24px}
+  h1{text-align:center;margin:0 0 16px;color:#1e3a8a}
+  #cari{display:block;margin:0 auto 16px;width:min(420px,100%);padding:12px 16px;font-size:16px;border:2px solid #93c5fd;border-radius:999px;outline:none}
+  #tapis{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:24px}
+  .chip{border:2px solid #3b82f6;background:#fff;color:#1e3a8a;padding:8px 16px;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer}
+  .chip.aktif{background:#3b82f6;color:#fff}
+  .grid{max-width:1000px;margin:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+  .kad{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-height:110px;padding:28px 16px 16px;border-radius:18px;color:#fff;font-weight:700;font-size:18px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s}
+  .kad:hover{transform:translateY(-4px) scale(1.03)}
+  .tag{position:absolute;top:8px;left:10px;background:rgba(255,255,255,.28);padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  #info{text-align:center;color:#475569}
+</style>
+</head>
+<body>
+<h1>🎮 Makmal Matematik</h1>
+<input id="cari" type="search" placeholder="Cari game...">
+<div id="tapis"></div>
+<div class="grid" id="grid"></div>
+<p id="info"></p>
 
-on:
-  push:
-    branches: [main]
-    paths-ignore: ['games.json']
+<script>
+const warna = ["#ef4444","#f97316","#eab308","#22c55e","#14b8a6","#3b82f6","#8b5cf6","#ec4899"];
+let games = [], tahunPilih = "Semua";
 
-permissions:
-  contents: write
+function papar(){
+  const q = document.getElementById("cari").value.toLowerCase();
+  const senarai = games.filter(g =>
+    (tahunPilih === "Semua" || g.tahun === tahunPilih) &&
+    g.title.toLowerCase().includes(q)
+  );
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  senarai.forEach((g,i)=>{
+    const a = document.createElement("a");
+    a.className = "kad";
+    a.href = encodeURI(g.path);
+    a.style.background = warna[i % warna.length];
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = g.tahun;
+    a.appendChild(tag);
+    a.appendChild(document.createTextNode(g.title));
+    grid.appendChild(a);
+  });
+  document.getElementById("info").textContent = senarai.length ? "" : "Tiada game dijumpai.";
+}
 
-jobs:
-  jana:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+function binaTapis(){
+  const unik = ["Semua", ...new Set(games.map(g => g.tahun))];
+  const kotak = document.getElementById("tapis");
+  kotak.innerHTML = "";
+  unik.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip" + (t === tahunPilih ? " aktif" : "");
+    b.textContent = t;
+    b.onclick = () => { tahunPilih = t; binaTapis(); papar(); };
+    kotak.appendChild(b);
+  });
+}
 
-      - name: Imbas fail HTML
-        run: |
-          python3 - <<'EOF'
-          import os, re, json
-          hasil = []
-          for root, dirs, files in os.walk("."):
-              dirs[:] = [d for d in dirs if not d.startswith((".", "_"))]
-              for f in files:
-                  if not f.endswith(".html"):
-                      continue
-                  p = os.path.join(root, f)[2:].replace("\\", "/")
-                  if p == "index.html":
-                      continue
-                  txt = open(p, encoding="utf-8", errors="ignore").read()
-                  m = re.search(r"<title>(.*?)</title>", txt, re.S | re.I)
-                  tajuk = m.group(1).strip() if m and m.group(1).strip() else f[:-5].replace("-", " ").title()
-                  hasil.append({"title": tajuk, "path": p})
-          hasil.sort(key=lambda x: x["title"].lower())
-          json.dump(hasil, open("games.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-          EOF
+fetch("games.json?v=" + Date.now())
+  .then(r => r.json())
+  .then(d => { games = d; binaTapis(); papar(); })
+  .catch(() => { document.getElementById("info").textContent = "Senarai game belum dijana."; });
 
-      - name: Simpan games.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add games.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Kemas kini senarai game"
-            git push
-          fi
+document.getElementById("cari").addEventListener("input", papar);
+</script>
+</body>
+</html>
