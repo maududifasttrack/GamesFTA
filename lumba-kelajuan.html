@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<title>🏎️ Lumba Kelajuan</title>
+<meta name="tahun" content="Tahun 6">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",sans-serif;background:linear-gradient(#7dd3fc,#e0f2fe 60%,#bbf7d0);min-height:100vh;color:#0f172a}
+#app{max-width:760px;margin:0 auto;padding:14px}
+h1{text-align:center;margin:8px 0;font-size:clamp(26px,6vw,38px)}
+.sub{text-align:center;margin:0 0 8px;font-size:18px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 14px #0002;margin:12px 0}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-size:18px;font-weight:700;cursor:pointer;background:#2563eb;color:#fff;width:100%;margin:6px 0}
+.btn.e{background:#16a34a}.btn.m{background:#d97706}.btn.h{background:#dc2626}.btn.g{background:#64748b}
+.track{position:relative;background:#475569;border-radius:12px;height:100px;overflow:hidden;padding-top:4px}
+.lane{position:relative;height:46px;border-bottom:2px dashed #fff8}
+.lane:last-of-type{border:0}
+.car{position:absolute;top:0;font-size:34px;line-height:46px;transition:left .7s;left:calc(var(--p,0)*(100% - 64px)/10)}
+.fin{position:absolute;right:0;top:0;bottom:0;width:14px;background:repeating-conic-gradient(#fff 0 25%,#000 0 50%) 0 0/14px 14px}
+.hud{display:flex;justify-content:space-between;font-weight:700;margin:8px 0;font-size:18px}
+.bar{height:10px;background:#cbd5e1;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:#22c55e;width:100%;transition:width 1s linear}
+#q{font-size:clamp(18px,4.5vw,24px);font-weight:600;line-height:1.4}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.opt{background:#f1f5f9;border:3px solid #cbd5e1;border-radius:14px;padding:16px 8px;font-size:clamp(18px,4.5vw,22px);font-weight:700;cursor:pointer;color:#0f172a}
+.opt:not(:disabled):hover{border-color:#2563eb}
+.opt.ok{background:#bbf7d0;border-color:#16a34a}.opt.no{background:#fecaca;border-color:#dc2626}
+#fb{margin-top:12px;padding:12px;border-radius:12px;font-size:17px;line-height:1.5}
+summary{font-weight:700;cursor:pointer}
+.fm{line-height:1.8;font-size:17px}
+#end{text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🏎️ Lumba Kelajuan</h1>
+
+<section id="menu">
+  <p class="sub">Jawab betul untuk memecut! Salah atau lambat, robot 🚓 yang maju.</p>
+  <div class="card">
+    <button class="btn e" onclick="start('e')">🟢 Mudah — km/j dan jam</button>
+    <button class="btn m" onclick="start('m')">🟡 Sederhana — minit dan m/s</button>
+    <button class="btn h" onclick="start('h')">🔴 Mencabar — tukar unit dan kelajuan purata</button>
+  </div>
+  <details class="card" open><summary>📐 Formula penting</summary><div class="fm">
+    Kelajuan = Jarak ÷ Masa<br>Jarak = Kelajuan × Masa<br>Masa = Jarak ÷ Kelajuan<br>
+    1 jam = 60 minit • km/j → m/s : ÷ 3.6 • m/s → km/j : × 3.6<br>
+    Kelajuan purata = Jumlah jarak ÷ Jumlah masa</div></details>
+</section>
+
+<section id="play" hidden>
+  <div class="track">
+    <div class="lane"><span class="car" id="me">🏎️</span></div>
+    <div class="lane"><span class="car" id="bot">🚓</span></div>
+    <div class="fin"></div>
+  </div>
+  <div class="hud"><span id="no"></span><span id="sc"></span><span id="st"></span></div>
+  <div class="bar"><i id="tb"></i></div>
+  <div class="card">
+    <div id="q"></div>
+    <div class="opts" id="opts"></div>
+    <div id="fb" hidden></div>
+    <button class="btn" id="nx" hidden></button>
+  </div>
+  <details class="card"><summary>📐 Bantuan formula</summary><div class="fm">
+    Kelajuan = Jarak ÷ Masa • Jarak = Kelajuan × Masa • Masa = Jarak ÷ Kelajuan<br>
+    1 jam = 60 minit • km/j ÷ 3.6 = m/s</div></details>
+</section>
+
+<section id="end" hidden>
+  <div class="card"><div id="res"></div>
+    <button class="btn" onclick="start(L)">🔁 Main lagi</button>
+    <button class="btn g" onclick="show('menu')">🏠 Menu</button>
+  </div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const r=n=>Math.floor(Math.random()*n);
+const R=a=>a[r(a.length)];
+const shuf=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+const V=['kereta','bas','motosikal','kereta api','lori'];
+const N=['Ali','Siti','Amir','Mei Ling','Kumar','Aina'];
+
+function easy(){
+  const v=R(V),s=R([30,40,45,50,60,75,80,90,100,120]),t=R([2,3,4,5,6]),d=s*t,k=r(3);
+  if(k==0)return{q:`Sebuah ${v} bergerak sejauh ${d} km dalam ${t} jam. Berapakah kelajuannya?`,a:s,u:'km/j',w:`Kelajuan = ${d} ÷ ${t}`};
+  if(k==1)return{q:`Sebuah ${v} bergerak pada kelajuan ${s} km/j selama ${t} jam. Berapakah jarak yang dilalui?`,a:d,u:'km',w:`Jarak = ${s} × ${t}`};
+  return{q:`Sebuah ${v} bergerak sejauh ${d} km pada kelajuan ${s} km/j. Berapa jam perjalanan itu?`,a:t,u:'jam',w:`Masa = ${d} ÷ ${s}`};
+}
+function medium(){
+  const k=r(6),v=R(V),s=R([40,60,80,120]),m=R([15,30,45,90]),d=s*m/60,h=m/60;
+  const ms=R([5,8,10,12,15,20]),ts=R([4,5,10,20,30]),dm=ms*ts;
+  if(k==0)return{q:`Sebuah ${v} bergerak pada ${s} km/j selama ${m} minit. Berapakah jarak yang dilalui?`,a:d,u:'km',w:`${m} min = ${h} j; ${s} × ${h}`};
+  if(k==1)return{q:`Sebuah ${v} bergerak sejauh ${d} km dalam ${m} minit. Berapakah kelajuannya?`,a:s,u:'km/j',w:`${m} min = ${h} j; ${d} ÷ ${h}`};
+  if(k==2)return{q:`Sebuah ${v} bergerak sejauh ${d} km pada ${s} km/j. Berapa minit perjalanan itu?`,a:m,u:'minit',w:`${d} ÷ ${s} = ${d/s} j; ${d/s} × 60`};
+  if(k==3)return{q:`Sebuah kereta mainan bergerak ${dm} m dalam ${ts} saat. Berapakah kelajuannya?`,a:ms,u:'m/s',w:`Kelajuan = ${dm} ÷ ${ts}`};
+  if(k==4)return{q:`Sebuah kereta mainan bergerak pada ${ms} m/s selama ${ts} saat. Berapakah jarak yang dilalui?`,a:dm,u:'m',w:`Jarak = ${ms} × ${ts}`};
+  return{q:`Sebuah kereta mainan bergerak ${dm} m pada ${ms} m/s. Berapa saat ia bergerak?`,a:ts,u:'saat',w:`Masa = ${dm} ÷ ${ms}`};
+}
+function hard(){
+  const k=r(4),n=R(N);
+  if(k==0){const s=R([18,36,54,72,90,108]),a=s/18*5;
+    return{q:`Tukarkan ${s} km/j kepada m/s.`,a,u:'m/s',w:`${s} × 1000 ÷ 3600`,x:[+(s*3.6).toFixed(1)]};}
+  if(k==1){const a=R([5,10,15,20,25,30]),s=a/5*18;
+    return{q:`Tukarkan ${a} m/s kepada km/j.`,a:s,u:'km/j',w:`${a} × 3600 ÷ 1000`,x:[+(a/3.6).toFixed(1)]};}
+  if(k==2){let s1,s2,t1,t2,D,T;
+    do{s1=R([20,30,40,60,80]);s2=R([20,30,40,60,80]);t1=R([1,2,3]);t2=R([1,2,3]);D=s1*t1+s2*t2;T=t1+t2}while(s1==s2||D%T);
+    return{q:`${n} memandu ${t1} jam pada ${s1} km/j, kemudian ${t2} jam pada ${s2} km/j. Berapakah kelajuan purata keseluruhan perjalanan?`,a:D/T,u:'km/j',w:`Purata = (${s1*t1} + ${s2*t2}) ÷ ${T}`,x:[(s1+s2)/2]};}
+  let s1,s2;do{s1=R([40,50,60,70,80]);s2=R([40,50,60,70,80])}while(s1==s2);
+  const t=R([2,3,4]);
+  return{q:`Dua buah kereta bertolak serentak dari tempat yang sama dan bergerak ke arah bertentangan pada ${s1} km/j dan ${s2} km/j. Berapakah jarak antara keduanya selepas ${t} jam?`,a:(s1+s2)*t,u:'km',w:`Jarak = (${s1} + ${s2}) × ${t}`,x:[Math.abs(s1-s2)*t]};
+}
+function opts(c){
+  const a=c.a,s=a>=100?10:a>=30?5:a>=10?2:1,ok=v=>v>0&&v!==a;
+  const e=[...new Set(c.x||[])].filter(ok);
+  const p=[...new Set([a+s,a-s,a+2*s,a-2*s,a*2,a+3*s])].filter(ok).filter(v=>!e.includes(v));
+  return shuf([a,...e.concat(shuf(p)).slice(0,3)]);
+}
+
+const GEN={e:easy,m:medium,h:hard},TT={e:25,m:35,h:45};
+let L,i,score,streak,ok,bot,cur,tl,T,tm,lock;
+function show(id){['menu','play','end'].forEach(s=>$(s).hidden=s!==id)}
+function upd(){
+  $('me').style.setProperty('--p',ok);$('bot').style.setProperty('--p',bot);
+  $('sc').textContent='⭐ '+score;$('st').textContent=streak>1?'🔥 '+streak:'';
+}
+function bar(){$('tb').style.width=(tl/T*100)+'%';$('tb').style.background=tl<=5?'#dc2626':'#22c55e'}
+function start(l){L=l;i=0;score=0;streak=0;ok=0;bot=0;T=TT[l];show('play');upd();next()}
+function next(){
+  if(i>=10)return fin();
+  cur=GEN[L]();i++;lock=false;tl=T;
+  $('no').textContent=`Soalan ${i}/10`;$('q').textContent=cur.q;
+  $('fb').hidden=true;$('nx').hidden=true;
+  $('tb').style.transition='none';bar();void $('tb').offsetWidth;$('tb').style.transition='';
+  $('opts').innerHTML='';
+  opts(cur).forEach(v=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=v+' '+cur.u;
+    b.onclick=()=>ans(b,v);$('opts').appendChild(b);
+  });
+  clearInterval(tm);
+  tm=setInterval(()=>{tl--;bar();if(tl<=0){clearInterval(tm);ans(null,null)}},1000);
+}
+function ans(b,v){
+  if(lock)return;lock=true;clearInterval(tm);
+  const good=v===cur.a,f=$('fb');
+  document.querySelectorAll('.opt').forEach(x=>{x.disabled=true;if(x.textContent===cur.a+' '+cur.u)x.classList.add('ok')});
+  if(b&&!good)b.classList.add('no');
+  f.hidden=false;
+  if(good){ok++;streak++;score+=10+Math.ceil(tl/5)+(streak>=3?5:0);
+    f.style.background='#dcfce7';f.innerHTML='✅ <b>Betul!</b> Kereta kamu memecut! 🏎️💨';}
+  else{streak=0;bot++;f.style.background='#fee2e2';
+    f.innerHTML=(b?'❌ <b>Belum tepat.</b>':'⏰ <b>Masa tamat!</b>')+' Robot 🚓 maju.';}
+  f.innerHTML+=`<br>📝 ${cur.w} = <b>${cur.a} ${cur.u}</b>`;
+  upd();
+  const n=$('nx');n.hidden=false;n.textContent=i>=10?'Lihat keputusan 🏁':'Soalan seterusnya ➡️';n.onclick=next;
+}
+function fin(){
+  show('end');
+  const w=ok>5?'🏆 Kamu menang!':ok===5?'🤝 Seri!':'😅 Robot menang. Cuba lagi!';
+  const st='⭐'.repeat(ok>=9?3:ok>=7?2:ok>=5?1:0)||'💪';
+  $('res').innerHTML=`<h2>${w}</h2><p style="font-size:20px">Betul: <b>${ok}/10</b> &nbsp; Skor: <b>${score}</b></p><div style="font-size:42px">${st}</div>`;
+}
+</script>
+</body>
+</html>
