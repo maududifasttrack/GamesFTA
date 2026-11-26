@@ -1,0 +1,46 @@
+name: Jana senarai game
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['games.json']
+
+permissions:
+  contents: write
+
+jobs:
+  jana:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Imbas fail HTML
+        run: |
+          python3 - <<'EOF'
+          import os, re, json
+          hasil = []
+          for root, dirs, files in os.walk("."):
+              dirs[:] = [d for d in dirs if not d.startswith((".", "_"))]
+              for f in files:
+                  if not f.endswith(".html"):
+                      continue
+                  p = os.path.join(root, f)[2:].replace("\\", "/")
+                  if p == "index.html":
+                      continue
+                  txt = open(p, encoding="utf-8", errors="ignore").read()
+                  m = re.search(r"<title>(.*?)</title>", txt, re.S | re.I)
+                  tajuk = m.group(1).strip() if m and m.group(1).strip() else f[:-5].replace("-", " ").title()
+                  hasil.append({"title": tajuk, "path": p})
+          hasil.sort(key=lambda x: x["title"].lower())
+          json.dump(hasil, open("games.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+          EOF
+
+      - name: Simpan games.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add games.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Kemas kini senarai game"
+            git push
+          fi
